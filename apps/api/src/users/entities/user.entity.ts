@@ -1,7 +1,1 @@
-export class User {
-  id: string;
-  nome: string;
-  email: string;
-  passwordHash: string;
-  createdAt: Date;
-}
+export type { User } from '@prisma/client';

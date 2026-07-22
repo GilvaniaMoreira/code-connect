@@ -1,19 +1,45 @@
 import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma, type User } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
+
+type PrismaMock = {
+  user: {
+    create: jest.Mock;
+    findUnique: jest.Mock;
+  };
+};
 
 describe('UsersService', () => {
   let service: UsersService;
+  let prisma: PrismaMock;
 
   beforeEach(async () => {
+    prisma = {
+      user: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
+      providers: [UsersService, { provide: PrismaService, useValue: prisma }],
     }).compile();
+
     service = module.get(UsersService);
   });
 
   it('hashes password on create and returns user with id', async () => {
+    prisma.user.create.mockImplementation(async ({ data }) => ({
+      id: '11111111-1111-1111-1111-111111111111',
+      nome: data.nome,
+      email: data.email,
+      passwordHash: data.passwordHash,
+      createdAt: new Date(),
+    }));
+
     const user = await service.create({
       nome: 'Ana',
       email: 'ana@x.com',
@@ -24,14 +50,22 @@ describe('UsersService', () => {
     expect(user.email).toBe('ana@x.com');
     expect(user.passwordHash).not.toBe('password123');
     expect(await bcrypt.compare('password123', user.passwordHash)).toBe(true);
+    expect(prisma.user.create).toHaveBeenCalledWith({
+      data: {
+        nome: 'Ana',
+        email: 'ana@x.com',
+        passwordHash: user.passwordHash,
+      },
+    });
   });
 
   it('rejects duplicate email regardless of case', async () => {
-    await service.create({
-      nome: 'Ana',
-      email: 'ana@x.com',
-      senha: 'password123',
-    });
+    prisma.user.create.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
 
     await expect(
       service.create({
@@ -40,16 +74,27 @@ describe('UsersService', () => {
         senha: 'password456',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ email: 'ana@x.com' }),
+      }),
+    );
   });
 
-  it('finds user by email case-insensitively', async () => {
-    const created = await service.create({
+  it('finds user by email case-insensitively (lowercased query)', async () => {
+    const storedUser: User = {
+      id: '22222222-2222-2222-2222-222222222222',
       nome: 'Ana',
       email: 'ana@x.com',
-      senha: 'password123',
-    });
+      passwordHash: 'hashed',
+      createdAt: new Date(),
+    };
+    prisma.user.findUnique.mockImplementation(async ({ where }) =>
+      where.email === 'ana@x.com' ? storedUser : null,
+    );
 
-    expect(service.findByEmail('ANA@X.com')?.id).toBe(created.id);
-    expect(service.findByEmail('unknown@x.com')).toBeUndefined();
+    await expect(service.findByEmail('ANA@X.com')).resolves.toEqual(storedUser);
+    await expect(service.findByEmail('unknown@x.com')).resolves.toBeNull();
   });
 });

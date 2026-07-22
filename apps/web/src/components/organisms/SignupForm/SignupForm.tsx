@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import { extractApiError, login, register } from '../../../services/auth'
+import { setToken } from '../../../lib/token'
 import { Button } from '../../atoms/Button'
 import { Checkbox } from '../../atoms/Checkbox'
 import { AuthCTA } from '../../molecules/AuthCTA'
@@ -38,15 +40,37 @@ const LoginIcon = () => (
   </svg>
 )
 
-export function SignupForm() {
+export type SignupFormProps = {
+  onSuccess?: () => void
+}
+
+export function SignupForm({ onSuccess }: SignupFormProps = {}) {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [lembrarMe, setLembrarMe] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log({ nome, email, senha, lembrarMe })
+    if (submitting) return
+    setError(null)
+    setSubmitting(true)
+    try {
+      await register({ nome, email, senha })
+      const { access_token } = await login({ email, senha })
+      setToken(access_token, lembrarMe)
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        window.location.hash = '#/inicio'
+      }
+    } catch (err) {
+      setError(extractApiError(err, 'Não foi possível concluir o cadastro. Tente novamente.'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -97,8 +121,19 @@ export function SignupForm() {
           Lembrar-me
         </Checkbox>
 
-        <Button type="submit" icon={<ArrowRightIcon />} className="mt-2 w-full">
-          Cadastrar
+        {error && (
+          <p role="alert" className="text-sm text-foreground/90">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          icon={<ArrowRightIcon />}
+          className="mt-2 w-full"
+          disabled={submitting}
+        >
+          {submitting ? 'Cadastrando...' : 'Cadastrar'}
         </Button>
       </form>
 

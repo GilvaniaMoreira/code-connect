@@ -1,19 +1,35 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SignupForm } from './SignupForm'
+import * as authService from '../../../services/auth'
+import * as tokenStorage from '../../../lib/token'
 
 describe('SignupForm', () => {
   beforeEach(() => {
-    vi.spyOn(console, 'log').mockImplementation(() => {})
+    window.localStorage.clear()
+    window.sessionStorage.clear()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  it('logs the filled data on submit', async () => {
-    render(<SignupForm />)
+  it('registers the user and logs in on success', async () => {
+    const registerSpy = vi.spyOn(authService, 'register').mockResolvedValue({
+      id: 'user-1',
+      nome: 'Alice Dev',
+      email: 'alice@code.dev',
+    })
+    const loginSpy = vi.spyOn(authService, 'login').mockResolvedValue({
+      access_token: 'jwt-token',
+      token_type: 'Bearer',
+      expires_in: 3600,
+    })
+    const setTokenSpy = vi.spyOn(tokenStorage, 'setToken')
+    const onSuccess = vi.fn()
+
+    render(<SignupForm onSuccess={onSuccess} />)
 
     await userEvent.type(screen.getByLabelText(/nome/i), 'Alice Dev')
     await userEvent.type(screen.getByLabelText(/email/i), 'alice@code.dev')
@@ -21,11 +37,32 @@ describe('SignupForm', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: /lembrar-me/i }))
     await userEvent.click(screen.getByRole('button', { name: /cadastrar/i }))
 
-    expect(console.log).toHaveBeenCalledWith({
-      nome: 'Alice Dev',
+    await waitFor(() => {
+      expect(registerSpy).toHaveBeenCalledWith({
+        nome: 'Alice Dev',
+        email: 'alice@code.dev',
+        senha: 'secret123',
+      })
+    })
+    expect(loginSpy).toHaveBeenCalledWith({
       email: 'alice@code.dev',
       senha: 'secret123',
-      lembrarMe: true,
     })
+    expect(setTokenSpy).toHaveBeenCalledWith('jwt-token', true)
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the API error message when register fails', async () => {
+    vi.spyOn(authService, 'register').mockRejectedValue(new Error('boom'))
+    vi.spyOn(authService, 'extractApiError').mockReturnValue('Email já cadastrado')
+
+    render(<SignupForm />)
+
+    await userEvent.type(screen.getByLabelText(/nome/i), 'Alice Dev')
+    await userEvent.type(screen.getByLabelText(/email/i), 'alice@code.dev')
+    await userEvent.type(screen.getByLabelText(/senha/i), 'secret123')
+    await userEvent.click(screen.getByRole('button', { name: /cadastrar/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Email já cadastrado')
   })
 })

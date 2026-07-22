@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import { extractApiError, login } from '../../../services/auth'
+import { setToken } from '../../../lib/token'
 import { Button } from '../../atoms/Button'
 import { AuthCTA } from '../../molecules/AuthCTA'
 import { FormField } from '../../molecules/FormField'
@@ -37,14 +39,35 @@ const ClipboardIcon = () => (
   </svg>
 )
 
-export function LoginForm() {
+export type LoginFormProps = {
+  onSuccess?: () => void
+}
+
+export function LoginForm({ onSuccess }: LoginFormProps = {}) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [lembrarMe, setLembrarMe] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log({ email, senha, lembrarMe })
+    if (submitting) return
+    setError(null)
+    setSubmitting(true)
+    try {
+      const { access_token } = await login({ email, senha })
+      setToken(access_token, lembrarMe)
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        window.location.hash = '#/inicio'
+      }
+    } catch (err) {
+      setError(extractApiError(err, 'Não foi possível fazer login. Verifique suas credenciais.'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -82,8 +105,19 @@ export function LoginForm() {
           forgotHref="#"
         />
 
-        <Button type="submit" icon={<ArrowRightIcon />} className="mt-2 w-full">
-          Login
+        {error && (
+          <p role="alert" className="text-sm text-foreground/90">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          icon={<ArrowRightIcon />}
+          className="mt-2 w-full"
+          disabled={submitting}
+        >
+          {submitting ? 'Entrando...' : 'Login'}
         </Button>
       </form>
 
