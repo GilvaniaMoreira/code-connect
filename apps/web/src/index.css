@@ -8,8 +8,8 @@
   --color-muted: #888888;              /* Cinza médio */
   --color-primary: #81fe88;            /* Verde destaque */
   --color-primary-foreground: #132e35; /* Verde petróleo */
-  --color-input: #888888;              /* Cinza médio */
-  --color-input-placeholder: #171d1f;  /* Cinza Escuro */
+  --color-input: #d1d5db;              /* Cinza claro (AA sobre texto escuro) */
+  --color-input-placeholder: #4b5563;  /* Cinza médio-escuro (~7:1 sobre input) */
   --color-divider: #4b5563;
 
   --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;

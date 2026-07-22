@@ -20,7 +20,7 @@ export function Link({
 }: LinkProps) {
   return (
     <a
-      className={`inline-flex items-center gap-1 text-sm transition ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-sm text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${variantClasses[variant]} ${className}`}
       {...rest}
     >
       {children}
