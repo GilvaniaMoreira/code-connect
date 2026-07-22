@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
+import { OptionalJwtAuthGuard } from './optional-jwt-auth.guard';
 import { jwtConstants } from './jwt.constants';
 
 @Module({
@@ -23,8 +24,8 @@ import { jwtConstants } from './jwt.constants';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, OptionalJwtAuthGuard],
   controllers: [AuthController],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, OptionalJwtAuthGuard],
 })
 export class AuthModule {}
