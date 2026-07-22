@@ -10,7 +10,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary text-black hover:brightness-95 active:brightness-90 focus-visible:ring-2 focus-visible:ring-primary/60',
+    'bg-primary text-primary-foreground hover:brightness-95 active:brightness-90 focus-visible:ring-2 focus-visible:ring-primary/60',
 }
 
 export function Button({

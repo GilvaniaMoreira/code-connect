@@ -8,8 +8,8 @@ type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
 }
 
 const variantClasses: Record<LinkVariant, string> = {
-  subtle: 'text-white underline underline-offset-4 hover:text-primary',
-  accent: 'text-primary-strong font-semibold hover:brightness-110',
+  subtle: 'text-foreground underline underline-offset-4 hover:text-primary',
+  accent: 'text-primary font-semibold hover:brightness-110',
 }
 
 export function Link({

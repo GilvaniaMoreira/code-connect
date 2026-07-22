@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '../../atoms/Button'
+import { Checkbox } from '../../atoms/Checkbox'
 import { AuthCTA } from '../../molecules/AuthCTA'
 import { FormField } from '../../molecules/FormField'
-import { RememberForgot } from '../../molecules/RememberForgot'
 import { SocialLoginGroup } from '../../molecules/SocialLoginGroup'
 
 const ArrowRightIcon = () => (
@@ -21,7 +21,7 @@ const ArrowRightIcon = () => (
   </svg>
 )
 
-const ClipboardIcon = () => (
+const LoginIcon = () => (
   <svg
     aria-hidden="true"
     viewBox="0 0 24 24"
@@ -32,35 +32,48 @@ const ClipboardIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <rect x="8" y="3" width="8" height="4" rx="1" />
-    <path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+    <path d="M10 17l5-5-5-5" />
+    <path d="M15 12H3" />
   </svg>
 )
 
-export function LoginForm() {
+export function SignupForm() {
+  const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [lembrarMe, setLembrarMe] = useState(false)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log({ email, senha, lembrarMe })
+    console.log({ nome, email, senha, lembrarMe })
   }
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold text-foreground">Login</h1>
-        <p className="text-base text-foreground/90">Boas-vindas! Faça seu login.</p>
+        <h1 className="text-3xl font-semibold text-foreground">Cadastro</h1>
+        <p className="text-base text-foreground/90">Olá! Preencha seus dados.</p>
       </header>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <FormField
+          id="nome"
+          name="nome"
+          label="Nome"
+          placeholder="Nome completo"
+          autoComplete="name"
+          value={nome}
+          onChange={(event) => setNome(event.target.value)}
+        />
+
+        <FormField
           id="email"
           name="email"
-          label="Email ou usuário"
-          placeholder="usuario123"
-          autoComplete="username"
+          type="email"
+          label="Email"
+          placeholder="Digite seu email"
+          autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
@@ -71,29 +84,31 @@ export function LoginForm() {
           type="password"
           label="Senha"
           placeholder="******"
-          autoComplete="current-password"
+          autoComplete="new-password"
           value={senha}
           onChange={(event) => setSenha(event.target.value)}
         />
 
-        <RememberForgot
+        <Checkbox
+          id="lembrar-me"
           checked={lembrarMe}
           onChange={(event) => setLembrarMe(event.target.checked)}
-          forgotHref="#"
-        />
+        >
+          Lembrar-me
+        </Checkbox>
 
         <Button type="submit" icon={<ArrowRightIcon />} className="mt-2 w-full">
-          Login
+          Cadastrar
         </Button>
       </form>
 
       <SocialLoginGroup />
 
       <AuthCTA
-        question="Ainda não tem conta?"
-        linkText="Crie seu cadastro!"
-        href="#/cadastro"
-        icon={<ClipboardIcon />}
+        question="Já tem conta?"
+        linkText="Faça seu login!"
+        href="#/login"
+        icon={<LoginIcon />}
       />
     </div>
   )
