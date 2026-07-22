@@ -2,7 +2,9 @@ packages:
   - "apps/*"
 
 allowBuilds:
-  '@scarf/scarf': false
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
   unrs-resolver: true
 
 ignoredBuiltDependencies:
@@ -11,5 +13,8 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - "@nestjs/core"
   - "@swc/core"
+  - "@prisma/client"
+  - "@prisma/engines"
   - esbuild
+  - prisma
   - unrs-resolver
