@@ -64,7 +64,7 @@ export function SignupForm({ onSuccess }: SignupFormProps = {}) {
       if (onSuccess) {
         onSuccess()
       } else {
-        window.location.hash = '#/inicio'
+        window.location.hash = '#/feed'
       }
     } catch (err) {
       setError(extractApiError(err, 'Não foi possível concluir o cadastro. Tente novamente.'))
