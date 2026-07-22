@@ -32,13 +32,18 @@ describe('UsersService', () => {
   });
 
   it('hashes password on create and returns user with id', async () => {
-    prisma.user.create.mockImplementation(async ({ data }) => ({
-      id: '11111111-1111-1111-1111-111111111111',
-      nome: data.nome,
-      email: data.email,
-      passwordHash: data.passwordHash,
-      createdAt: new Date(),
-    }));
+    prisma.user.create.mockImplementation(
+      (args: Prisma.UserCreateArgs): User => {
+        const data = args.data;
+        return {
+          id: '11111111-1111-1111-1111-111111111111',
+          nome: data.nome,
+          email: data.email,
+          passwordHash: data.passwordHash,
+          createdAt: new Date(),
+        };
+      },
+    );
 
     const user = await service.create({
       nome: 'Ana',
@@ -77,7 +82,7 @@ describe('UsersService', () => {
 
     expect(prisma.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ email: 'ana@x.com' }),
+        data: expect.objectContaining({ email: 'ana@x.com' }) as unknown,
       }),
     );
   });
@@ -90,8 +95,9 @@ describe('UsersService', () => {
       passwordHash: 'hashed',
       createdAt: new Date(),
     };
-    prisma.user.findUnique.mockImplementation(async ({ where }) =>
-      where.email === 'ana@x.com' ? storedUser : null,
+    prisma.user.findUnique.mockImplementation(
+      (args: Prisma.UserFindUniqueArgs): User | null =>
+        args.where.email === 'ana@x.com' ? storedUser : null,
     );
 
     await expect(service.findByEmail('ANA@X.com')).resolves.toEqual(storedUser);

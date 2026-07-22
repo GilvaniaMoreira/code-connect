@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import type { User } from '@prisma/client';
+import { Prisma, type User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
@@ -24,7 +24,8 @@ describe('AuthService', () => {
     store.clear();
     prisma = {
       user: {
-        create: jest.fn(async ({ data }) => {
+        create: jest.fn((args: Prisma.UserCreateArgs): User => {
+          const data = args.data;
           const user: User = {
             id: `id-${store.size + 1}`,
             nome: data.nome,
@@ -35,7 +36,10 @@ describe('AuthService', () => {
           store.set(data.email, user);
           return user;
         }),
-        findUnique: jest.fn(async ({ where }) => store.get(where.email) ?? null),
+        findUnique: jest.fn((args: Prisma.UserFindUniqueArgs): User | null => {
+          const email = args.where.email;
+          return typeof email === 'string' ? (store.get(email) ?? null) : null;
+        }),
       },
     };
 
