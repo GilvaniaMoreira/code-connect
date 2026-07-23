@@ -5,7 +5,12 @@ import { SocialIcon } from './SocialIcon'
 describe('SocialIcon', () => {
   it('renders image with alt text and label', () => {
     render(<SocialIcon src="/Github.png" alt="Github logo" label="Github" />)
-    expect(screen.getByAltText('Github logo')).toBeInTheDocument()
+    const img = screen.getByAltText('Github logo')
+    expect(img).toBeInTheDocument()
+    expect(img).toHaveAttribute('width', '40')
+    expect(img).toHaveAttribute('height', '40')
+    expect(img).toHaveAttribute('loading', 'lazy')
+    expect(img).toHaveAttribute('decoding', 'async')
     expect(screen.getByText('Github')).toBeInTheDocument()
   })
 })

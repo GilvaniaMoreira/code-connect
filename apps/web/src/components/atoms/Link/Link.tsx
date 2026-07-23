@@ -8,8 +8,8 @@ type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
 }
 
 const variantClasses: Record<LinkVariant, string> = {
-  subtle: 'text-white underline underline-offset-4 hover:text-primary',
-  accent: 'text-primary-strong font-semibold hover:brightness-110',
+  subtle: 'text-foreground underline underline-offset-4 hover:text-primary',
+  accent: 'text-primary font-semibold hover:brightness-110',
 }
 
 export function Link({
@@ -20,7 +20,7 @@ export function Link({
 }: LinkProps) {
   return (
     <a
-      className={`inline-flex items-center gap-1 text-sm transition ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-sm text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${variantClasses[variant]} ${className}`}
       {...rest}
     >
       {children}

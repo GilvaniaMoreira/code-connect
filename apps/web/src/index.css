@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0e131c;
-  --color-surface: #1f2229;
-  --color-input: #4a4a55;
-  --color-input-placeholder: #d1d5db;
-  --color-primary: #8fee7a;
-  --color-primary-strong: #26c76b;
-  --color-muted: #9ca3af;
+  /* Paleta Code Connect (Figma) */
+  --color-background: #00090e;         /* Grafite */
+  --color-surface: #171d1f;            /* Cinza Escuro */
+  --color-foreground: #e1e1e1;         /* Offwhite */
+  --color-muted: #888888;              /* Cinza médio */
+  --color-primary: #81fe88;            /* Verde destaque */
+  --color-primary-foreground: #132e35; /* Verde petróleo */
+  --color-input: #d1d5db;              /* Cinza claro (AA sobre texto escuro) */
+  --color-input-placeholder: #4b5563;  /* Cinza médio-escuro (~7:1 sobre input) */
   --color-divider: #4b5563;
 
   --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
@@ -22,7 +24,7 @@ body,
 body {
   margin: 0;
   background-color: var(--color-background);
-  color: white;
+  color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

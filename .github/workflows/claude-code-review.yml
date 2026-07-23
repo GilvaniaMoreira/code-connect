@@ -1,0 +1,38 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Faça uma revisão técnica do pull request atual seguindo estas diretrizes:
+
+            1. Qualidade de código: legibilidade, nomes claros, funções pequenas e coesas.
+            2. Boas práticas: princípios SOLID, DRY, tratamento de erros e segurança
+               (validação de entrada, injeção de SQL, exposição de segredos, XSS).
+            3. Consistência com o restante do projeto (padrões do Next.js, Prisma e NestJS
+               conforme a área alterada).
+            4. Performance: consultas ao banco (N+1), memoização desnecessária, re-renderizações.
+            5. Testes: se há testes cobrindo o comportamento alterado; sugira cenários faltantes.
+            6. Sugira melhorias objetivas, mostrando trechos de código quando útil.
+
+            Responda em português, comente diretamente nas linhas relevantes do diff quando possível
+            e finalize com um resumo curto do que foi aprovado e do que precisa de ajuste.

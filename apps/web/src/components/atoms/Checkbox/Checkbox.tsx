@@ -7,7 +7,7 @@ type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
 
 export function Checkbox({ id, children, className = '', ...rest }: CheckboxProps) {
   return (
-    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2 text-sm text-white">
+    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2 text-sm text-foreground">
       <input
         id={id}
         type="checkbox"

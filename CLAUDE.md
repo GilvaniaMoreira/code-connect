@@ -15,26 +15,31 @@ The two apps do not import from each other and have no shared package — treat 
 
 Run from the repo root. The root [package.json](package.json) exposes filter shortcuts so you rarely need to `cd` into `apps/*`.
 
-**Run both apps in parallel (dev)**
-```
+### Run both apps in parallel (dev)
+
+```bash
 pnpm dev
 ```
+
 This uses `pnpm --parallel --filter web --filter api run "/^(dev|start:dev)$/"` — the regex is required because the web script is `dev` while the api script is `start:dev`.
 
-**Per-app dev**
-```
+### Per-app dev
+
+```bash
 pnpm web:dev        # vite (web)
 pnpm api:dev        # nest start --watch (api)
 ```
 
-**Build / lint (all workspaces)**
-```
+### Build / lint (all workspaces)
+
+```bash
 pnpm build          # pnpm -r build
 pnpm lint           # pnpm -r lint
 ```
 
-**API-specific**
-```
+### API-specific
+
+```bash
 pnpm api:build              # nest build
 pnpm api:start              # nest start (no watch)
 pnpm api:test               # jest (unit, src/**/*.spec.ts)
@@ -45,8 +50,9 @@ pnpm api -- test -- <name>  # run a single test by name pattern
 pnpm api:lint               # eslint --fix
 ```
 
-**Web-specific**
-```
+### Web-specific
+
+```bash
 pnpm web:build              # tsc -b && vite build
 pnpm web:preview            # vite preview
 pnpm web:lint               # oxlint
@@ -90,6 +96,23 @@ Vite 8 + React 19 SPA. Root [vite.config.ts](apps/web/vite.config.ts) only regis
 Compose upward only — an atom never imports a molecule, a molecule never imports an organism, etc.
 
 **Styling: Tailwind CSS (mandatory).** All styling must go through Tailwind utility classes. Do not add per-component CSS files, CSS Modules, or CSS-in-JS. Extract repeated utility strings into components (or `@apply` in a single global stylesheet) rather than duplicating markup.
+
+**Colors (mandatory).** The design system palette lives in [apps/web/src/index.css](apps/web/src/index.css) inside the Tailwind v4 `@theme` block. All colors must be consumed as semantic tokens — never hardcode hex in components.
+
+- **Never write raw hex in components** (`bg-[#171d1f]`, `text-[#e1e1e1]`, inline `style={{ color: '#...' }}`). Always use the token utility (`bg-surface`, `text-foreground`, etc.).
+- **Never use Tailwind's generic palette** (`text-white`, `text-black`, `bg-gray-800`, `text-green-500`). Use the semantic token that matches the role.
+- **Available tokens** (Figma name → utility):
+  - Grafite `#00090e` → `bg-background`
+  - Cinza Escuro `#171d1f` → `bg-surface` / `text-surface`
+  - Offwhite `#e1e1e1` → `text-foreground`
+  - Cinza médio `#888888` → `text-muted` / `bg-input`
+  - Verde destaque `#81fe88` → `bg-primary` / `text-primary`
+  - Verde petróleo `#132e35` → `text-primary-foreground` (text on primary surfaces)
+  - Placeholder de input → `placeholder:text-input-placeholder`
+  - Divider → `border-divider` / `bg-divider`
+- **Adding a new color:** extend the palette in [index.css](apps/web/src/index.css) with `--color-<name>: #hex` inside `@theme` — that automatically creates all Tailwind utilities (`bg-<name>`, `text-<name>`, `border-<name>`, …). Prefer role-based names (`--color-danger`, `--color-warning`) over color names (`--color-red`).
+
+**Sizes and spacing (mandatory).** Stick to Tailwind's default scale. Arbitrary values (`text-[15px]`, `w-[407px]`, `p-[13px]`, `gap-[7px]`) are forbidden — pick the closest scale token instead (`text-sm`/`text-base`, `w-full`/`max-w-sm`, `p-3`/`p-4`, `gap-2`). If a Figma value doesn't match the scale, round to the nearest step; a 1–2px difference is not worth breaking the system. Only extend the scale via `@theme` (e.g. `--spacing-*`, `--text-*`) when the same off-scale value repeats across multiple components.
 
 **Testing (mandatory).** Every component ships with at least one test covering its essential usage — the primary render path and the main user interaction (click, input, submit) if it has one. Colocate tests next to the component (`Button.tsx` + `Button.test.tsx`). Use React Testing Library semantics (`getByRole`, `getByLabelText`) — don't assert against implementation details.
 
