@@ -2,6 +2,33 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "unaccent";
 
+-- Wrapper IMMUTABLE para unaccent (o unaccent nativo é STABLE e não pode
+-- ser usado em colunas geradas STORED nem em índices de expressão).
+CREATE OR REPLACE FUNCTION immutable_unaccent(text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+STRICT
+AS $$ SELECT unaccent('unaccent'::regdictionary, $1) $$;
+
+-- Wrapper IMMUTABLE que monta o tsvector de busca dos posts.
+-- to_tsvector também é STABLE no catálogo do Postgres, então precisa
+-- ser encapsulado para poder ser usado em coluna gerada STORED.
+CREATE OR REPLACE FUNCTION posts_search_document(
+    title text,
+    description text,
+    tags text[]
+) RETURNS tsvector
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+    SELECT setweight(to_tsvector('portuguese', immutable_unaccent(coalesce(title, ''))), 'A') ||
+           setweight(to_tsvector('portuguese', immutable_unaccent(coalesce(description, ''))), 'B') ||
+           setweight(to_tsvector('portuguese', immutable_unaccent(coalesce(array_to_string(tags, ' '), ''))), 'C')
+$$;
+
 -- CreateTable: users (idempotente para bases já criadas via db push)
 CREATE TABLE IF NOT EXISTS "users" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -37,11 +64,7 @@ CREATE INDEX "posts_created_at_idx" ON "posts"("created_at" DESC);
 -- Usamos configuração "portuguese" com unaccent para tolerar acentuação
 ALTER TABLE "posts"
     ADD COLUMN "search_document" tsvector
-    GENERATED ALWAYS AS (
-        setweight(to_tsvector('portuguese', unaccent(coalesce("title", ''))), 'A') ||
-        setweight(to_tsvector('portuguese', unaccent(coalesce("description", ''))), 'B') ||
-        setweight(to_tsvector('portuguese', unaccent(coalesce(array_to_string("tags", ' '), ''))), 'C')
-    ) STORED;
+    GENERATED ALWAYS AS (posts_search_document("title", "description", "tags")) STORED;
 
 CREATE INDEX "posts_search_document_idx" ON "posts" USING GIN ("search_document");
 
