@@ -96,8 +96,8 @@ describe('UsersService', () => {
       createdAt: new Date(),
     };
     prisma.user.findUnique.mockImplementation(
-      (args: Prisma.UserFindUniqueArgs): User | null =>
-        args.where.email === 'ana@x.com' ? storedUser : null,
+      (args: Prisma.UserFindUniqueArgs): Promise<User | null> =>
+        Promise.resolve(args.where.email === 'ana@x.com' ? storedUser : null),
     );
 
     await expect(service.findByEmail('ANA@X.com')).resolves.toEqual(storedUser);
