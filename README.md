@@ -86,11 +86,28 @@ pnpm --filter api exec jest --config ./test/jest-e2e.json
 pnpm --filter web test              # watch
 pnpm --filter web exec vitest run   # single run
 pnpm --filter web exec vitest --ui  # UI interativa
+pnpm --filter web test:cov          # single run + cobertura (v8)
 ```
+
+### Cobertura mesclada (API + Web)
+
+Gera relatório único combinando Jest (api) e Vitest (web) via `nyc`:
+
+```powershell
+pnpm coverage
+```
+
+Saída em `coverage/`:
+
+- `coverage/lcov.info` — pronto pra Codecov, Sonar, IDE plugins etc.
+- `coverage/lcov-report/index.html` — relatório navegável.
+- Text summary no stdout (statements, branches, functions, lines).
+
+Passos individuais também disponíveis: `pnpm coverage:api`, `pnpm coverage:web`, `pnpm coverage:merge`.
 
 ## Estrutura
 
-```
+```text
 code-connet/
 ├── apps/
 │   ├── api/                          # NestJS 11
@@ -136,7 +153,7 @@ Detalhes completos em [CLAUDE.md](CLAUDE.md).
 Base: `http://localhost:3000` · Docs interativas em `/docs`.
 
 | Método | Rota | Auth | Descrição |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `POST` | `/users` | — | Cadastro |
 | `POST` | `/auth/login` | — | Retorna JWT |
 | `GET` | `/users/me` | Bearer | Perfil autenticado |
@@ -180,7 +197,7 @@ A API roda `prisma migrate deploy` no start, então migrations pendentes são ap
 Além das do dev, o compose de produção lê:
 
 | Var | Default | Descrição |
-|---|---|---|
+| --- | --- | --- |
 | `API_PORT` | `3000` | Porta pública da API |
 | `WEB_PORT` | `8080` | Porta pública do SPA |
 | `VITE_API_URL` | `http://localhost:3000` | URL da API embutida no bundle do SPA (baked at build time) |
