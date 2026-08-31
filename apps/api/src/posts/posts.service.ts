@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { ListPostsQueryDto } from './dto/list-posts-query.dto';
 import { PostCommentDto, PostDetailDto, PostSummaryDto } from './dto/post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 export type PaginatedPosts = {
   items: PostSummaryDto[];
@@ -39,7 +41,11 @@ export class PostsService {
         _count: { select: { likes: true, comments: true } },
       },
     });
-    return PostDetailDto.fromDetail({ post, likedByMe: false });
+    return PostDetailDto.fromDetail({
+      post,
+      likedByMe: false,
+      viewerId: authorId,
+    });
   }
 
   async list(query: ListPostsQueryDto): Promise<PaginatedPosts> {
@@ -136,7 +142,63 @@ export class PostsService {
       });
       likedByMe = Boolean(like);
     }
-    return PostDetailDto.fromDetail({ post, likedByMe });
+    return PostDetailDto.fromDetail({ post, likedByMe, viewerId });
+  }
+
+  async update(
+    slug: string,
+    viewerId: string,
+    dto: UpdatePostDto,
+  ): Promise<PostDetailDto> {
+    const existing = await this.prisma.post.findUnique({
+      where: { slug },
+      select: { id: true, authorId: true },
+    });
+    if (!existing) throw new NotFoundException('Post não encontrado');
+    if (existing.authorId !== viewerId) {
+      throw new ForbiddenException('Somente o autor pode editar este post');
+    }
+
+    const data: Prisma.PostUpdateInput = {};
+    if (dto.title !== undefined) data.title = dto.title.trim();
+    if (dto.description !== undefined)
+      data.description = dto.description.trim();
+    if (dto.code !== undefined) data.code = dto.code;
+    if (dto.tags !== undefined) data.tags = dto.tags;
+    if (dto.thumbnail !== undefined) data.thumbnail = dto.thumbnail;
+
+    const updated = await this.prisma.post.update({
+      where: { id: existing.id },
+      data,
+      include: {
+        author: true,
+        comments: { include: { user: true }, orderBy: { createdAt: 'asc' } },
+        _count: { select: { likes: true, comments: true } },
+      },
+    });
+
+    const like = await this.prisma.like.findUnique({
+      where: { postId_userId: { postId: existing.id, userId: viewerId } },
+      select: { id: true },
+    });
+
+    return PostDetailDto.fromDetail({
+      post: updated,
+      likedByMe: Boolean(like),
+      viewerId,
+    });
+  }
+
+  async remove(slug: string, viewerId: string): Promise<void> {
+    const existing = await this.prisma.post.findUnique({
+      where: { slug },
+      select: { id: true, authorId: true },
+    });
+    if (!existing) throw new NotFoundException('Post não encontrado');
+    if (existing.authorId !== viewerId) {
+      throw new ForbiddenException('Somente o autor pode excluir este post');
+    }
+    await this.prisma.post.delete({ where: { id: existing.id } });
   }
 
   async like(

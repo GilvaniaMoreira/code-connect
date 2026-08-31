@@ -7,6 +7,8 @@ type ServiceMock = {
   list: jest.Mock;
   findBySlug: jest.Mock;
   create: jest.Mock;
+  update: jest.Mock;
+  remove: jest.Mock;
   like: jest.Mock;
   unlike: jest.Mock;
   comment: jest.Mock;
@@ -27,6 +29,8 @@ describe('PostsController', () => {
       list: jest.fn(),
       findBySlug: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn(),
       like: jest.fn(),
       unlike: jest.fn(),
       comment: jest.fn(),
@@ -80,6 +84,23 @@ describe('PostsController', () => {
     await controller.create(requestWithUser('author-1'), dto);
 
     expect(service.create).toHaveBeenCalledWith('author-1', dto);
+  });
+
+  it('PATCH /posts/:slug delegates the DTO with the author id', async () => {
+    service.update.mockResolvedValue({});
+    const dto = { title: 'Novo título' };
+
+    await controller.update('s', requestWithUser('author-1'), dto);
+
+    expect(service.update).toHaveBeenCalledWith('s', 'author-1', dto);
+  });
+
+  it('DELETE /posts/:slug calls service.remove with slug and user id', async () => {
+    service.remove.mockResolvedValue(undefined);
+
+    await controller.remove('s', requestWithUser('author-1'));
+
+    expect(service.remove).toHaveBeenCalledWith('s', 'author-1');
   });
 
   it('POST /posts/:slug/likes calls service.like with slug and user id', async () => {

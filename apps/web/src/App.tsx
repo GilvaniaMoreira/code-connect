@@ -19,6 +19,15 @@ const PostDetailPage = lazy(() =>
 const HomePage = lazy(() =>
   import('./components/pages/HomePage').then((m) => ({ default: m.HomePage })),
 )
+const PublishPage = lazy(() =>
+  import('./components/pages/PublishPage').then((m) => ({ default: m.PublishPage })),
+)
+const EditPostPage = lazy(() =>
+  import('./components/pages/EditPostPage').then((m) => ({ default: m.EditPostPage })),
+)
+const ProfilePage = lazy(() =>
+  import('./components/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+)
 
 function RequireAuth({ children }: Readonly<{ children: React.ReactElement }>) {
   const isAuthenticated = useIsAuthenticated()
@@ -34,6 +43,30 @@ function App() {
           <Route path="/" element={<Navigate to="/feed" replace />} />
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/post/:slug" element={<PostDetailPage />} />
+          <Route
+            path="/post/:slug/editar"
+            element={
+              <RequireAuth>
+                <EditPostPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/publicar"
+            element={
+              <RequireAuth>
+                <PublishPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/perfil"
+            element={
+              <RequireAuth>
+                <ProfilePage />
+              </RequireAuth>
+            }
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/cadastro" element={<SignupPage />} />
           <Route

@@ -37,6 +37,7 @@ function makeDetail(overrides: Partial<PostDetail> = {}): PostDetail {
     createdAt: '2026-01-01T00:00:00.000Z',
     comments: [],
     likedByMe: false,
+    isAuthor: false,
     ...overrides,
   }
 }

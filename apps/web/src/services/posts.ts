@@ -30,6 +30,7 @@ export type PostDetail = PostSummary & {
   code: string
   comments: PostComment[]
   likedByMe: boolean
+  isAuthor: boolean
 }
 
 export type PaginatedPosts = {
@@ -45,6 +46,16 @@ export type ListPostsParams = {
   pageSize?: number
 }
 
+export type CreatePostPayload = {
+  title: string
+  description: string
+  code: string
+  tags?: string[]
+  thumbnail?: string
+}
+
+export type UpdatePostPayload = Partial<CreatePostPayload>
+
 export async function listPosts(params: ListPostsParams = {}): Promise<PaginatedPosts> {
   const { data } = await api.get<PaginatedPosts>('/posts', { params })
   return data
@@ -53,6 +64,26 @@ export async function listPosts(params: ListPostsParams = {}): Promise<Paginated
 export async function getPost(slug: string): Promise<PostDetail> {
   const { data } = await api.get<PostDetail>(`/posts/${encodeURIComponent(slug)}`)
   return data
+}
+
+export async function createPost(payload: CreatePostPayload): Promise<PostDetail> {
+  const { data } = await api.post<PostDetail>('/posts', payload)
+  return data
+}
+
+export async function updatePost(
+  slug: string,
+  payload: UpdatePostPayload,
+): Promise<PostDetail> {
+  const { data } = await api.patch<PostDetail>(
+    `/posts/${encodeURIComponent(slug)}`,
+    payload,
+  )
+  return data
+}
+
+export async function deletePost(slug: string): Promise<void> {
+  await api.delete(`/posts/${encodeURIComponent(slug)}`)
 }
 
 export async function likePost(slug: string): Promise<{ likesCount: number; likedByMe: true }> {

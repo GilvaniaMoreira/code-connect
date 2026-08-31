@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, type Comment, type Post, type User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,6 +14,8 @@ type PrismaMock = {
     findUnique: jest.Mock;
     findMany: jest.Mock;
     count: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
   };
   like: {
     create: jest.Mock;
@@ -58,6 +64,8 @@ describe('PostsService', () => {
         findUnique: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
       },
       like: {
         create: jest.fn(),
@@ -280,6 +288,133 @@ describe('PostsService', () => {
       await expect(service.findBySlug('missing')).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+
+    it('marks isAuthor=true when the viewer authored the post', async () => {
+      prisma.post.findUnique.mockResolvedValue({
+        ...makePost(),
+        author,
+        comments: [],
+        _count: { likes: 0, comments: 0 },
+      });
+
+      const result = await service.findBySlug('como-usar-useeffect', author.id);
+
+      expect(result.isAuthor).toBe(true);
+    });
+
+    it('marks isAuthor=false when the viewer is not the author', async () => {
+      prisma.post.findUnique.mockResolvedValue({
+        ...makePost(),
+        author,
+        comments: [],
+        _count: { likes: 0, comments: 0 },
+      });
+
+      const result = await service.findBySlug(
+        'como-usar-useeffect',
+        'viewer-1',
+      );
+
+      expect(result.isAuthor).toBe(false);
+    });
+  });
+
+  describe('update', () => {
+    it('trims fields and persists only the ones present in the DTO', async () => {
+      prisma.post.findUnique.mockResolvedValueOnce({
+        id: 'post-1',
+        authorId: author.id,
+      });
+      prisma.post.update.mockResolvedValue({
+        ...makePost({ title: 'Novo título' }),
+        author,
+        comments: [],
+        _count: { likes: 0, comments: 0 },
+      });
+      prisma.like.findUnique.mockResolvedValue(null);
+
+      const result = await service.update('como-usar-useeffect', author.id, {
+        title: '  Novo título  ',
+        description: '  Descrição maior que dez caracteres  ',
+      });
+
+      expect(prisma.post.update).toHaveBeenCalledWith({
+        where: { id: 'post-1' },
+        data: expect.objectContaining({
+          title: 'Novo título',
+          description: 'Descrição maior que dez caracteres',
+        }) as unknown,
+        include: expect.any(Object) as unknown,
+      });
+      const firstCall = prisma.post.update.mock.calls[0] as [
+        { data: Record<string, unknown> },
+      ];
+      const dataArg = firstCall[0].data;
+      expect(dataArg).not.toHaveProperty('code');
+      expect(dataArg).not.toHaveProperty('tags');
+      expect(dataArg).not.toHaveProperty('thumbnail');
+      expect(result.isAuthor).toBe(true);
+    });
+
+    it('throws NotFoundException when the slug does not exist', async () => {
+      prisma.post.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.update('missing', author.id, { title: 'Novo título' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.post.update).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when the viewer is not the author', async () => {
+      prisma.post.findUnique.mockResolvedValueOnce({
+        id: 'post-1',
+        authorId: author.id,
+      });
+
+      await expect(
+        service.update('como-usar-useeffect', 'other-user', {
+          title: 'Novo título',
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.post.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('remove', () => {
+    it('deletes the post when the viewer is the author', async () => {
+      prisma.post.findUnique.mockResolvedValueOnce({
+        id: 'post-1',
+        authorId: author.id,
+      });
+      prisma.post.delete.mockResolvedValue({});
+
+      await service.remove('como-usar-useeffect', author.id);
+
+      expect(prisma.post.delete).toHaveBeenCalledWith({
+        where: { id: 'post-1' },
+      });
+    });
+
+    it('throws NotFoundException when the slug does not exist', async () => {
+      prisma.post.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.remove('missing', author.id)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(prisma.post.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when the viewer is not the author', async () => {
+      prisma.post.findUnique.mockResolvedValueOnce({
+        id: 'post-1',
+        authorId: author.id,
+      });
+
+      await expect(
+        service.remove('como-usar-useeffect', 'other-user'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.post.delete).not.toHaveBeenCalled();
     });
   });
 
