@@ -5,7 +5,9 @@ import { UsersService } from '../users/users.service';
 import { JwtStrategy } from './jwt.strategy';
 
 describe('JwtStrategy', () => {
-  const config = { get: jest.fn().mockReturnValue('test-secret') } as unknown as ConfigService;
+  const config = {
+    get: jest.fn().mockReturnValue('test-secret'),
+  } as unknown as ConfigService;
 
   function build(findById: jest.Mock): JwtStrategy {
     const usersService = { findById } as unknown as UsersService;
@@ -37,9 +39,15 @@ describe('JwtStrategy', () => {
   });
 
   it('falls back to the dev secret when JWT_SECRET is unset', () => {
-    const noopConfig = { get: jest.fn().mockReturnValue(undefined) } as unknown as ConfigService;
+    const noopConfig = {
+      get: jest.fn().mockReturnValue(undefined),
+    } as unknown as ConfigService;
     expect(
-      () => new JwtStrategy({ findById: jest.fn() } as unknown as UsersService, noopConfig),
+      () =>
+        new JwtStrategy(
+          { findById: jest.fn() } as unknown as UsersService,
+          noopConfig,
+        ),
     ).not.toThrow();
   });
 });

@@ -13,7 +13,9 @@ type ServiceMock = {
 };
 
 function requestWithUser(id: string | null): Request {
-  return { user: id ? { id, nome: 'A', email: 'a@x.com' } : undefined } as unknown as Request;
+  return {
+    user: id ? { id, nome: 'A', email: 'a@x.com' } : undefined,
+  } as unknown as Request;
 }
 
 describe('PostsController', () => {
@@ -37,7 +39,12 @@ describe('PostsController', () => {
   });
 
   it('GET /posts delegates the query to the service', async () => {
-    service.list.mockResolvedValue({ items: [], page: 1, pageSize: 12, total: 0 });
+    service.list.mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 12,
+      total: 0,
+    });
 
     const query = { page: 1, pageSize: 12, q: 'react' };
     await controller.list(query);

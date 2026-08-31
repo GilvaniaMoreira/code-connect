@@ -69,7 +69,10 @@ describe('Posts (e2e)', () => {
     return `${Date.now()}-${counter}`;
   }
 
-  async function registerAndLogin(): Promise<{ userId: string; token: string }> {
+  async function registerAndLogin(): Promise<{
+    userId: string;
+    token: string;
+  }> {
     const suffix = unique();
     const dto = {
       nome: `User ${suffix}`,

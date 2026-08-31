@@ -41,7 +41,11 @@ describe('UsersController', () => {
   });
 
   it('GET /users/me returns the user attached by the JWT guard', () => {
-    const publicUser: PublicUser = { id: 'u1', nome: 'Ana', email: 'ana@x.com' };
+    const publicUser: PublicUser = {
+      id: 'u1',
+      nome: 'Ana',
+      email: 'ana@x.com',
+    };
     const req = { user: publicUser } as unknown as Request;
 
     expect(controller.me(req)).toBe(publicUser);

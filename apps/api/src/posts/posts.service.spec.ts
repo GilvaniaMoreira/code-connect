@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma, type Comment, type Like, type Post, type User } from '@prisma/client';
+import { Prisma, type Comment, type Post, type User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PostsService } from './posts.service';
 
@@ -211,7 +211,11 @@ describe('PostsService', () => {
         },
       ]);
 
-      const result = await service.list({ q: 'react hooks', page: 1, pageSize: 12 });
+      const result = await service.list({
+        q: 'react hooks',
+        page: 1,
+        pageSize: 12,
+      });
 
       expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
       expect(prisma.post.findMany).toHaveBeenCalledWith(
@@ -258,7 +262,10 @@ describe('PostsService', () => {
       });
       prisma.like.findUnique.mockResolvedValue({ id: 'like-1' });
 
-      const result = await service.findBySlug('como-usar-useeffect', 'viewer-1');
+      const result = await service.findBySlug(
+        'como-usar-useeffect',
+        'viewer-1',
+      );
 
       expect(prisma.like.findUnique).toHaveBeenCalledWith({
         where: { postId_userId: { postId: 'post-1', userId: 'viewer-1' } },
@@ -279,7 +286,7 @@ describe('PostsService', () => {
   describe('like', () => {
     it('creates the like and returns the updated count', async () => {
       prisma.post.findUnique.mockResolvedValue({ id: 'post-1' });
-      prisma.like.create.mockResolvedValue({} as Like);
+      prisma.like.create.mockResolvedValue({});
       prisma.like.count.mockResolvedValue(7);
 
       const result = await service.like('como-usar-useeffect', 'viewer-1');
@@ -317,7 +324,7 @@ describe('PostsService', () => {
   describe('unlike', () => {
     it('deletes the like and returns the updated count', async () => {
       prisma.post.findUnique.mockResolvedValue({ id: 'post-1' });
-      prisma.like.delete.mockResolvedValue({} as Like);
+      prisma.like.delete.mockResolvedValue({});
       prisma.like.count.mockResolvedValue(2);
 
       const result = await service.unlike('como-usar-useeffect', 'viewer-1');

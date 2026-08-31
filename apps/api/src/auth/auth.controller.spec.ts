@@ -42,7 +42,10 @@ describe('AuthController', () => {
       senha: 'password123',
     });
 
-    expect(service.validateUser).toHaveBeenCalledWith('ana@x.com', 'password123');
+    expect(service.validateUser).toHaveBeenCalledWith(
+      'ana@x.com',
+      'password123',
+    );
     expect(service.login).toHaveBeenCalledWith(user);
     expect(result.access_token).toBe('t');
   });
