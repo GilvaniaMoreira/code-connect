@@ -11,8 +11,11 @@ type LoginBody = {
   expires_in: number;
 };
 
+type UserFixture = { nome: string; email: string; senha: string };
+
 describe('Auth (e2e)', () => {
   let app: INestApplication<App>;
+  let counter = 0;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -34,62 +37,66 @@ describe('Auth (e2e)', () => {
     await app.close();
   });
 
-  const validUser = {
-    nome: 'Ana',
-    email: 'ana@x.com',
-    senha: 'password123',
-  };
+  function makeUser(): UserFixture {
+    counter += 1;
+    const suffix = `${Date.now()}-${counter}`;
+    return {
+      nome: `User ${suffix}`,
+      email: `auth-${suffix}@x.com`,
+      senha: 'password123',
+    };
+  }
 
   describe('POST /users', () => {
     it('creates a user and returns 201 without password', async () => {
+      const user = makeUser();
       const res = await request(app.getHttpServer())
         .post('/users')
-        .send(validUser)
+        .send(user)
         .expect(201);
 
       const body = res.body as PublicUserBody;
       expect(body).toEqual({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         id: expect.any(String),
-        nome: validUser.nome,
-        email: validUser.email,
+        nome: user.nome,
+        email: user.email,
       });
       expect(body).not.toHaveProperty('senha');
       expect(body).not.toHaveProperty('passwordHash');
     });
 
     it('rejects duplicate email regardless of case with 409', async () => {
-      await request(app.getHttpServer())
-        .post('/users')
-        .send(validUser)
-        .expect(201);
+      const user = makeUser();
+      await request(app.getHttpServer()).post('/users').send(user).expect(201);
 
       await request(app.getHttpServer())
         .post('/users')
-        .send({ ...validUser, email: 'ANA@X.com' })
+        .send({ ...user, email: user.email.toUpperCase() })
         .expect(409);
     });
 
     it('rejects short password with 400', async () => {
+      const user = makeUser();
       await request(app.getHttpServer())
         .post('/users')
-        .send({ ...validUser, senha: 'short' })
+        .send({ ...user, senha: 'short' })
         .expect(400);
     });
   });
 
   describe('POST /auth/login', () => {
+    let user: UserFixture;
+
     beforeEach(async () => {
-      await request(app.getHttpServer())
-        .post('/users')
-        .send(validUser)
-        .expect(201);
+      user = makeUser();
+      await request(app.getHttpServer()).post('/users').send(user).expect(201);
     });
 
     it('issues a token on valid credentials (200)', async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: validUser.email, senha: validUser.senha })
+        .send({ email: user.email, senha: user.senha })
         .expect(200);
 
       const body = res.body as LoginBody;
@@ -104,32 +111,38 @@ describe('Auth (e2e)', () => {
     it('rejects wrong password with 401', async () => {
       await request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: validUser.email, senha: 'wrong-password' })
+        .send({ email: user.email, senha: 'wrong-password' })
         .expect(401);
     });
 
     it('rejects unknown email with 401 (no enumeration)', async () => {
+      counter += 1;
       await request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'unknown@x.com', senha: 'password123' })
+        .send({
+          email: `unknown-${Date.now()}-${counter}@x.com`,
+          senha: 'password123',
+        })
         .expect(401);
     });
   });
 
   describe('GET /users/me', () => {
+    let user: UserFixture;
     let token: string;
     let createdUser: PublicUserBody;
 
     beforeEach(async () => {
+      user = makeUser();
       const created = await request(app.getHttpServer())
         .post('/users')
-        .send(validUser)
+        .send(user)
         .expect(201);
       createdUser = created.body as PublicUserBody;
 
       const login = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: validUser.email, senha: validUser.senha })
+        .send({ email: user.email, senha: user.senha })
         .expect(200);
       token = (login.body as LoginBody).access_token;
     });
