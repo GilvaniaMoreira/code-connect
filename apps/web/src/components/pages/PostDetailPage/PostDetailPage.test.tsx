@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PostDetail } from '../../../services/posts'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { PostDetailPage } from './PostDetailPage'
 
 vi.mock('../../../services/posts', () => ({
@@ -44,11 +45,18 @@ afterEach(() => {
   vi.mocked(getPost).mockReset()
 })
 
+function renderAtSlug(slug = 'como-usar-useeffect') {
+  return renderWithRouter(<PostDetailPage />, {
+    route: `/post/${slug}`,
+    path: '/post/:slug',
+  })
+}
+
 describe('PostDetailPage', () => {
   it('renders the loading status while fetching', () => {
     vi.mocked(getPost).mockReturnValue(new Promise(() => {}))
 
-    render(<PostDetailPage slug="como-usar-useeffect" />)
+    renderAtSlug()
 
     expect(screen.getByRole('status')).toHaveTextContent(/carregando publicação/i)
   })
@@ -56,7 +64,7 @@ describe('PostDetailPage', () => {
   it('renders the post title and code once resolved', async () => {
     vi.mocked(getPost).mockResolvedValue(makeDetail())
 
-    render(<PostDetailPage slug="como-usar-useeffect" />)
+    renderAtSlug()
 
     expect(await screen.findByText(/como usar useeffect/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /código/i })).toBeInTheDocument()
@@ -65,10 +73,12 @@ describe('PostDetailPage', () => {
   it('renders the error alert when the fetch fails', async () => {
     vi.mocked(getPost).mockRejectedValue(new Error('boom'))
 
-    render(<PostDetailPage slug="missing" />)
+    renderAtSlug('missing')
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/não foi possível carregar o post/i)
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /não foi possível carregar o post/i,
+      )
     })
   })
 })

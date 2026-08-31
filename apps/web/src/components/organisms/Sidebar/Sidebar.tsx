@@ -1,3 +1,4 @@
+import { Link, useNavigate } from 'react-router-dom'
 import { useIsAuthenticated } from '../../../lib/session'
 import { clearToken } from '../../../lib/token'
 import { MaterialIcon } from '../../atoms/MaterialIcon'
@@ -10,43 +11,44 @@ type MenuItem = {
   id: 'feed' | 'perfil' | 'sobre'
   icon: string
   label: string
-  href: string
+  to: string
 }
 
 const items: MenuItem[] = [
-  { id: 'feed', icon: 'feed', label: 'Feed', href: '#/feed' },
-  { id: 'perfil', icon: 'account_circle', label: 'Perfil', href: '#/perfil' },
-  { id: 'sobre', icon: 'info', label: 'Sobre nós', href: '#/sobre' },
+  { id: 'feed', icon: 'feed', label: 'Feed', to: '/feed' },
+  { id: 'perfil', icon: 'account_circle', label: 'Perfil', to: '/perfil' },
+  { id: 'sobre', icon: 'info', label: 'Sobre nós', to: '/sobre' },
 ]
 
-export function Sidebar({ active = 'feed' }: SidebarProps) {
+export function Sidebar({ active = 'feed' }: Readonly<SidebarProps>) {
   const isAuthenticated = useIsAuthenticated()
+  const navigate = useNavigate()
 
   const handleLogout = () => {
     clearToken()
-    window.location.hash = '#/feed'
+    navigate('/feed')
   }
 
   return (
     <aside className="flex w-44 shrink-0 flex-col items-center gap-20 self-stretch rounded-lg bg-surface p-4">
-      <a href="#/feed" aria-label="Ir para o feed">
+      <Link to="/feed" aria-label="Ir para o feed">
         <Logo />
-      </a>
+      </Link>
 
       <nav className="flex w-full flex-col items-center gap-10">
         {isAuthenticated && (
-          <a
-            href="#/publicar"
+          <Link
+            to="/publicar"
             className="flex w-full items-center justify-center rounded-lg border border-primary px-4 py-3 text-lg text-primary transition hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Publicar
-          </a>
+          </Link>
         )}
 
         {items.map((item) => (
-          <a
+          <Link
             key={item.id}
-            href={item.href}
+            to={item.to}
             aria-current={item.id === active ? 'page' : undefined}
             className={`flex flex-col items-center gap-2 rounded-md px-4 py-2 text-lg transition hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               item.id === active ? 'text-foreground' : 'text-muted'
@@ -54,7 +56,7 @@ export function Sidebar({ active = 'feed' }: SidebarProps) {
           >
             <MaterialIcon name={item.icon} size="lg" />
             <span>{item.label}</span>
-          </a>
+          </Link>
         ))}
 
         {isAuthenticated ? (
@@ -67,13 +69,13 @@ export function Sidebar({ active = 'feed' }: SidebarProps) {
             <span>Sair</span>
           </button>
         ) : (
-          <a
-            href="#/login"
+          <Link
+            to="/login"
             className="flex flex-col items-center gap-2 rounded-md px-4 py-2 text-lg text-muted transition hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <MaterialIcon name="login" size="lg" />
             <span>Login</span>
-          </a>
+          </Link>
         )}
       </nav>
     </aside>

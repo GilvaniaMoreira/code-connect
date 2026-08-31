@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { PostSummary } from '../../../services/posts'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { PostCard } from './PostCard'
 
 const post: PostSummary = {
@@ -18,23 +19,22 @@ const post: PostSummary = {
 }
 
 describe('PostCard', () => {
-  it('renders as link to detail when href provided', () => {
-    render(<PostCard post={post} href="#/post/meu-post" />)
+  it('renders as link to detail when `to` provided', () => {
+    renderWithRouter(<PostCard post={post} to="/post/meu-post" />)
     const link = screen.getByRole('link', { name: /abrir publicação/i })
-    expect(link).toHaveAttribute('href', '#/post/meu-post')
+    expect(link).toHaveAttribute('href', '/post/meu-post')
     expect(screen.getByRole('heading', { name: 'Meu post' })).toBeInTheDocument()
     expect(screen.getByText('React')).toBeInTheDocument()
   })
 
   it('disables like when interactionsDisabled is true', () => {
-    render(<PostCard post={post} variant="detail" interactionsDisabled />)
-    // Não há botão de curtir renderizado (only static)
+    renderWithRouter(<PostCard post={post} variant="detail" interactionsDisabled />)
     expect(screen.queryByRole('button', { name: /curtir/i })).not.toBeInTheDocument()
   })
 
   it('calls onLikeToggle when like button clicked', async () => {
     const onLikeToggle = vi.fn()
-    render(
+    renderWithRouter(
       <PostCard
         post={post}
         variant="detail"

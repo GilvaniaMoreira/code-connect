@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { extractApiError, login } from '../../../services/auth'
 import { setToken } from '../../../lib/token'
 import { Button } from '../../atoms/Button'
@@ -43,7 +44,8 @@ export type LoginFormProps = {
   onSuccess?: () => void
 }
 
-export function LoginForm({ onSuccess }: LoginFormProps = {}) {
+export function LoginForm({ onSuccess }: Readonly<LoginFormProps> = {}) {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [lembrarMe, setLembrarMe] = useState(false)
@@ -61,7 +63,7 @@ export function LoginForm({ onSuccess }: LoginFormProps = {}) {
       if (onSuccess) {
         onSuccess()
       } else {
-        window.location.hash = '#/feed'
+        navigate('/feed')
       }
     } catch (err) {
       setError(extractApiError(err, 'Não foi possível fazer login. Verifique suas credenciais.'))
@@ -126,7 +128,7 @@ export function LoginForm({ onSuccess }: LoginFormProps = {}) {
       <AuthCTA
         question="Ainda não tem conta?"
         linkText="Crie seu cadastro!"
-        href="#/cadastro"
+        to="/cadastro"
         icon={<ClipboardIcon />}
       />
     </div>

@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PublicUser } from '../../../services/auth'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { HomePage } from './HomePage'
 
 vi.mock('../../../services/auth', () => ({
@@ -12,6 +13,13 @@ vi.mock('../../../services/auth', () => ({
 vi.mock('../../../lib/token', () => ({
   clearToken: vi.fn(),
 }))
+
+const { mockNavigate } = vi.hoisted(() => ({ mockNavigate: vi.fn() }))
+vi.mock('react-router-dom', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
 
 const { getMe } = await import('../../../services/auth')
 const { clearToken } = await import('../../../lib/token')
@@ -25,14 +33,14 @@ const user: PublicUser = {
 afterEach(() => {
   vi.mocked(getMe).mockReset()
   vi.mocked(clearToken).mockReset()
-  window.location.hash = ''
+  mockNavigate.mockReset()
 })
 
 describe('HomePage', () => {
   it('renders the loading state while fetching the profile', () => {
     vi.mocked(getMe).mockReturnValue(new Promise(() => {}))
 
-    render(<HomePage />)
+    renderWithRouter(<HomePage />)
 
     expect(screen.getByText(/carregando seus dados/i)).toBeInTheDocument()
   })
@@ -40,23 +48,21 @@ describe('HomePage', () => {
   it('greets the authenticated user with name and email', async () => {
     vi.mocked(getMe).mockResolvedValue(user)
 
-    render(<HomePage />)
+    renderWithRouter(<HomePage />)
 
     expect(await screen.findByText(/olá, ana!/i)).toBeInTheDocument()
     expect(screen.getByText('ana@x.com')).toBeInTheDocument()
   })
 
-  it('clears the token and redirects to /login on logout', async () => {
+  it('clears the token and navigates to /login on logout', async () => {
     vi.mocked(getMe).mockResolvedValue(user)
 
-    render(<HomePage />)
+    renderWithRouter(<HomePage />)
     await screen.findByText(/olá, ana!/i)
 
     await userEvent.click(screen.getByRole('button', { name: /sair/i }))
 
     expect(clearToken).toHaveBeenCalledTimes(1)
-    await waitFor(() => {
-      expect(window.location.hash).toBe('#/login')
-    })
+    expect(mockNavigate).toHaveBeenCalledWith('/login')
   })
 })

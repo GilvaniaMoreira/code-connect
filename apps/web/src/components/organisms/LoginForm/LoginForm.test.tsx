@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { LoginForm } from './LoginForm'
 import * as authService from '../../../services/auth'
 import * as tokenStorage from '../../../lib/token'
+import { renderWithRouter } from '../../../test/renderWithRouter'
+import { LoginForm } from './LoginForm'
 
 describe('LoginForm', () => {
   beforeEach(() => {
@@ -24,7 +25,7 @@ describe('LoginForm', () => {
     const setTokenSpy = vi.spyOn(tokenStorage, 'setToken')
     const onSuccess = vi.fn()
 
-    render(<LoginForm onSuccess={onSuccess} />)
+    renderWithRouter(<LoginForm onSuccess={onSuccess} />)
 
     await userEvent.type(screen.getByLabelText(/email ou usuário/i), 'alice@code.dev')
     await userEvent.type(screen.getByLabelText(/senha/i), 'secret123')
@@ -45,7 +46,7 @@ describe('LoginForm', () => {
     vi.spyOn(authService, 'login').mockRejectedValue(new Error('boom'))
     vi.spyOn(authService, 'extractApiError').mockReturnValue('Credenciais inválidas')
 
-    render(<LoginForm />)
+    renderWithRouter(<LoginForm />)
 
     await userEvent.type(screen.getByLabelText(/email ou usuário/i), 'alice@code.dev')
     await userEvent.type(screen.getByLabelText(/senha/i), 'wrong-pass')

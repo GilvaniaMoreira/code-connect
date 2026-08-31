@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { useIsAuthenticated } from '../../../lib/session'
 import { extractApiError } from '../../../services/auth'
 import {
@@ -13,11 +14,8 @@ import { CommentSection } from '../../organisms/CommentSection'
 import { PostCard } from '../../organisms/PostCard'
 import { AppLayout } from '../../templates/AppLayout'
 
-type PostDetailPageProps = {
-  slug: string
-}
-
-export function PostDetailPage({ slug }: PostDetailPageProps) {
+export function PostDetailPage() {
+  const { slug = '' } = useParams<{ slug: string }>()
   const isAuthenticated = useIsAuthenticated()
   const [post, setPost] = useState<PostDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,12 +63,12 @@ export function PostDetailPage({ slug }: PostDetailPageProps) {
 
   return (
     <AppLayout active="feed">
-      <a
-        href="#/feed"
+      <Link
+        to="/feed"
         className="text-sm text-muted underline underline-offset-4 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         ← Voltar ao feed
-      </a>
+      </Link>
 
       {loading && (
         <p role="status" className="text-muted">

@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { AppLayout } from './AppLayout'
 
 describe('AppLayout', () => {
   it('renders children inside the main region', () => {
-    render(
+    renderWithRouter(
       <AppLayout>
         <p>hello</p>
       </AppLayout>,

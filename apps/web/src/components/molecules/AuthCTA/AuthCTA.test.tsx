@@ -1,14 +1,15 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { AuthCTA } from './AuthCTA'
 
 describe('AuthCTA', () => {
-  it('renders question and link with href', () => {
-    render(
+  it('renders question and link with to', () => {
+    renderWithRouter(
       <AuthCTA
         question="Ainda não tem conta?"
         linkText="Crie seu cadastro!"
-        href="/cadastro"
+        to="/cadastro"
       />,
     )
 
@@ -19,11 +20,11 @@ describe('AuthCTA', () => {
   })
 
   it('renders the provided icon next to the link text', () => {
-    render(
+    renderWithRouter(
       <AuthCTA
         question="Já tem conta?"
         linkText="Faça seu login!"
-        href="/login"
+        to="/login"
         icon={<span data-testid="cta-icon" aria-hidden="true" />}
       />,
     )
