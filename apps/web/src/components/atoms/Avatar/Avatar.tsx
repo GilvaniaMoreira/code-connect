@@ -29,5 +29,5 @@ function initials(name: string): string {
   const parts = clean.split(/[\s._-]+/).filter(Boolean)
   const first = parts[0]?.[0] ?? ''
   const second = parts[1]?.[0] ?? parts[0]?.[1] ?? ''
-  return (first + second).toUpperCase()
+  return (first + second).toUpperCase() || '?'
 }
