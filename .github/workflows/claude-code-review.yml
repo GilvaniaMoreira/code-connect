@@ -7,7 +7,10 @@ on:
 jobs:
   claude-review:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Fail fast if the API hangs — the SDK's default retry loop can burn ~3min
+    # before giving up. Six minutes is enough for a real review, short enough
+    # not to waste a slot when the model is unreachable.
+    timeout-minutes: 6
     # Skip runs where the secret is not exposed (e.g. PRs from forks) so the
     # step doesn't burn 3 min just to fail with is_error:true.
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
@@ -38,6 +41,10 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: '--model claude-sonnet-4-6 --max-turns 8'
+          # Surface the full SDK output — without this, silent failures
+          # (timeouts, model overload) show up as "is_error:true" with no
+          # explanation, making triage impossible.
+          show_full_output: true
           prompt: |
             Faça uma revisão técnica do pull request atual seguindo estas diretrizes:
 
