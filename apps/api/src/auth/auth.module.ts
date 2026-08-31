@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { getJwtSecret } from './jwt.config';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
 import { OptionalJwtAuthGuard } from './optional-jwt-auth.guard';
@@ -18,8 +19,7 @@ import { jwtConstants } from './jwt.constants';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret:
-          config.get<string>('JWT_SECRET') ?? 'dev-insecure-secret-change-me',
+        secret: getJwtSecret(config),
         signOptions: { expiresIn: jwtConstants.expiresIn },
       }),
     }),

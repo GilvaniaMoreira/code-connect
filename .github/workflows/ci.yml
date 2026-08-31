@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Lint, build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (api)
+        run: pnpm --filter api exec eslint "{src,test}/**/*.ts" --max-warnings=0
+
+      - name: Lint (web)
+        run: pnpm --filter web lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests (api)
+        run: pnpm --filter api exec jest --ci --coverage
+
+      - name: Unit tests (web)
+        run: pnpm --filter web exec vitest run
+
+  api-e2e:
+    name: API e2e tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: code_connect
+          POSTGRES_PASSWORD: ci-password
+          POSTGRES_DB: code_connect
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U code_connect -d code_connect"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://code_connect:ci-password@localhost:5432/code_connect?schema=public
+      JWT_SECRET: ci-secret-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm --filter api exec prisma migrate deploy
+
+      - name: e2e tests
+        run: pnpm --filter api exec jest --config ./test/jest-e2e.json --ci --runInBand

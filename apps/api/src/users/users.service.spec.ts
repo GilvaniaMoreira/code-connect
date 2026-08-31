@@ -87,6 +87,31 @@ describe('UsersService', () => {
     );
   });
 
+  it('rethrows unknown errors from prisma.user.create', async () => {
+    prisma.user.create.mockRejectedValueOnce(new Error('boom'));
+
+    await expect(
+      service.create({ nome: 'Ana', email: 'ana@x.com', senha: 'password123' }),
+    ).rejects.toThrow('boom');
+  });
+
+  it('finds a user by id', async () => {
+    const storedUser: User = {
+      id: 'user-id-1',
+      nome: 'Ana',
+      email: 'ana@x.com',
+      passwordHash: 'hashed',
+      createdAt: new Date(),
+    };
+    prisma.user.findUnique.mockImplementation(
+      (args: Prisma.UserFindUniqueArgs): Promise<User | null> =>
+        Promise.resolve(args.where.id === 'user-id-1' ? storedUser : null),
+    );
+
+    await expect(service.findById('user-id-1')).resolves.toEqual(storedUser);
+    await expect(service.findById('unknown')).resolves.toBeNull();
+  });
+
   it('finds user by email case-insensitively (lowercased query)', async () => {
     const storedUser: User = {
       id: '22222222-2222-2222-2222-222222222222',
@@ -96,8 +121,8 @@ describe('UsersService', () => {
       createdAt: new Date(),
     };
     prisma.user.findUnique.mockImplementation(
-      (args: Prisma.UserFindUniqueArgs): User | null =>
-        args.where.email === 'ana@x.com' ? storedUser : null,
+      (args: Prisma.UserFindUniqueArgs): Promise<User | null> =>
+        Promise.resolve(args.where.email === 'ana@x.com' ? storedUser : null),
     );
 
     await expect(service.findByEmail('ANA@X.com')).resolves.toEqual(storedUser);

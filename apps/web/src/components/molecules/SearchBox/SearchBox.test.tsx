@@ -1,28 +1,30 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SearchBox } from './SearchBox'
 
+afterEach(() => {
+  vi.useRealTimers()
+})
+
 describe('SearchBox', () => {
-  it('debounces search input and forwards value', async () => {
+  it('debounces search input and forwards value after 300ms', () => {
     vi.useFakeTimers()
     const onSearch = vi.fn()
     render(<SearchBox value="" onSearch={onSearch} />)
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
-    await user.type(screen.getByRole('searchbox'), 'react')
-    vi.advanceTimersByTime(400)
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'react' } })
+    expect(onSearch).not.toHaveBeenCalled()
 
+    vi.advanceTimersByTime(300)
     expect(onSearch).toHaveBeenLastCalledWith('react')
-    vi.useRealTimers()
   })
 
-  it('submits immediately on Enter', async () => {
+  it('submits immediately on Enter', () => {
     const onSearch = vi.fn()
     render(<SearchBox value="" onSearch={onSearch} />)
 
-    const input = screen.getByRole('searchbox')
-    await userEvent.type(input, 'nest{enter}')
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'nest' } })
+    fireEvent.submit(screen.getByRole('search'))
 
     expect(onSearch).toHaveBeenCalledWith('nest')
   })
