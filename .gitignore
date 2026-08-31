@@ -34,3 +34,6 @@ yarn-error.log*
 Thumbs.db
 *.suo
 *.sw?
+
+# Claude Code — per-developer local settings, not shared
+.claude/
