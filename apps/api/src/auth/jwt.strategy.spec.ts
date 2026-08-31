@@ -38,7 +38,7 @@ describe('JwtStrategy', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('falls back to the dev secret when JWT_SECRET is unset', () => {
+  it('throws when JWT_SECRET is not configured', () => {
     const noopConfig = {
       get: jest.fn().mockReturnValue(undefined),
     } as unknown as ConfigService;
@@ -48,6 +48,6 @@ describe('JwtStrategy', () => {
           { findById: jest.fn() } as unknown as UsersService,
           noopConfig,
         ),
-    ).not.toThrow();
+    ).toThrow(/JWT_SECRET/);
   });
 });
