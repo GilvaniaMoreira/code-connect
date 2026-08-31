@@ -1,5 +1,6 @@
-import { lazy, Suspense, useSyncExternalStore } from 'react'
-import { getToken } from './lib/token'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useIsAuthenticated } from './lib/session'
 
 const LoginPage = lazy(() =>
   import('./components/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
@@ -11,40 +12,76 @@ const FeedPage = lazy(() =>
   import('./components/pages/FeedPage').then((m) => ({ default: m.FeedPage })),
 )
 const PostDetailPage = lazy(() =>
-  import('./components/pages/PostDetailPage').then((m) => ({ default: m.PostDetailPage })),
+  import('./components/pages/PostDetailPage').then((m) => ({
+    default: m.PostDetailPage,
+  })),
 )
 const HomePage = lazy(() =>
   import('./components/pages/HomePage').then((m) => ({ default: m.HomePage })),
 )
+const PublishPage = lazy(() =>
+  import('./components/pages/PublishPage').then((m) => ({ default: m.PublishPage })),
+)
+const EditPostPage = lazy(() =>
+  import('./components/pages/EditPostPage').then((m) => ({ default: m.EditPostPage })),
+)
+const ProfilePage = lazy(() =>
+  import('./components/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+)
 
-const subscribe = (callback: () => void) => {
-  window.addEventListener('hashchange', callback)
-  return () => window.removeEventListener('hashchange', callback)
-}
-
-const getHash = () => window.location.hash
-const getServerHash = () => ''
-
-function resolvePage(hash: string) {
-  if (hash === '' || hash === '#' || hash === '#/' || hash === '#/feed') {
-    return <FeedPage />
-  }
-  if (hash.startsWith('#/post/')) {
-    const slug = decodeURIComponent(hash.slice('#/post/'.length))
-    if (slug) return <PostDetailPage slug={slug} />
-    return <FeedPage />
-  }
-  if (hash === '#/login') return <LoginPage />
-  if (hash === '#/cadastro') return <SignupPage />
-  if (hash === '#/inicio') {
-    return getToken() ? <HomePage /> : <LoginPage />
-  }
-  return <FeedPage />
+function RequireAuth({ children }: Readonly<{ children: React.ReactElement }>) {
+  const isAuthenticated = useIsAuthenticated()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return children
 }
 
 function App() {
-  const hash = useSyncExternalStore(subscribe, getHash, getServerHash)
-  return <Suspense fallback={null}>{resolvePage(hash)}</Suspense>
+  return (
+    <BrowserRouter>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/feed" replace />} />
+          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/post/:slug" element={<PostDetailPage />} />
+          <Route
+            path="/post/:slug/editar"
+            element={
+              <RequireAuth>
+                <EditPostPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/publicar"
+            element={
+              <RequireAuth>
+                <PublishPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/perfil"
+            element={
+              <RequireAuth>
+                <ProfilePage />
+              </RequireAuth>
+            }
+          />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/cadastro" element={<SignupPage />} />
+          <Route
+            path="/inicio"
+            element={
+              <RequireAuth>
+                <HomePage />
+              </RequireAuth>
+            }
+          />
+          <Route path="*" element={<Navigate to="/feed" replace />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  )
 }
 
 export default App

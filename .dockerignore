@@ -1,0 +1,26 @@
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+**/.next
+**/.cache
+**/.vite
+
+# Env & local overrides — provide these at runtime, never bake them in
+.env
+.env.*
+!.env.example
+
+# Git / CI
+.git
+.gitignore
+.github
+
+# IDE
+.vscode
+.idea
+*.log
+
+# Project docs / meta
+CLAUDE.md
+README.md

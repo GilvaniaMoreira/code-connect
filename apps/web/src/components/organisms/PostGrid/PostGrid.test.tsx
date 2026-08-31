@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { PostSummary } from '../../../services/posts'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { PostGrid } from './PostGrid'
 
 const makePost = (id: string): PostSummary => ({
@@ -18,12 +19,12 @@ const makePost = (id: string): PostSummary => ({
 
 describe('PostGrid', () => {
   it('renders empty message when no posts', () => {
-    render(<PostGrid posts={[]} emptyMessage="Vazio!" />)
+    renderWithRouter(<PostGrid posts={[]} emptyMessage="Vazio!" />)
     expect(screen.getByRole('status')).toHaveTextContent(/vazio/i)
   })
 
   it('renders one link per post', () => {
-    render(<PostGrid posts={[makePost('1'), makePost('2')]} />)
+    renderWithRouter(<PostGrid posts={[makePost('1'), makePost('2')]} />)
     expect(screen.getAllByRole('link')).toHaveLength(2)
   })
 })

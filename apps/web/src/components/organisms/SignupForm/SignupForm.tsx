@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { extractApiError, login, register } from '../../../services/auth'
 import { setToken } from '../../../lib/token'
 import { Button } from '../../atoms/Button'
@@ -44,7 +45,8 @@ export type SignupFormProps = {
   onSuccess?: () => void
 }
 
-export function SignupForm({ onSuccess }: SignupFormProps = {}) {
+export function SignupForm({ onSuccess }: Readonly<SignupFormProps> = {}) {
+  const navigate = useNavigate()
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -64,7 +66,7 @@ export function SignupForm({ onSuccess }: SignupFormProps = {}) {
       if (onSuccess) {
         onSuccess()
       } else {
-        window.location.hash = '#/feed'
+        navigate('/feed')
       }
     } catch (err) {
       setError(extractApiError(err, 'Não foi possível concluir o cadastro. Tente novamente.'))
@@ -142,7 +144,7 @@ export function SignupForm({ onSuccess }: SignupFormProps = {}) {
       <AuthCTA
         question="Já tem conta?"
         linkText="Faça seu login!"
-        href="#/login"
+        to="/login"
         icon={<LoginIcon />}
       />
     </div>

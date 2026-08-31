@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { Tag } from '../../atoms/Tag'
 import { AuthorBadge } from '../../molecules/AuthorBadge'
 import { PostStat } from '../../molecules/PostStat'
@@ -8,7 +9,7 @@ import type { PostSummary } from '../../../services/posts'
 type PostCardProps = {
   post: PostSummary
   variant?: 'feed' | 'detail'
-  href?: string
+  to?: string
   actions?: ReactNode
   likedByMe?: boolean
   onLikeToggle?: () => void
@@ -21,13 +22,13 @@ type PostCardProps = {
 export function PostCard({
   post,
   variant = 'feed',
-  href,
+  to,
   actions,
   likedByMe = false,
   onLikeToggle,
   onCommentClick,
   interactionsDisabled = false,
-}: PostCardProps) {
+}: Readonly<PostCardProps>) {
   const thumbSize = variant === 'detail' ? 'lg' : 'sm'
   const titleClass =
     variant === 'detail'
@@ -82,15 +83,15 @@ export function PostCard({
     </>
   )
 
-  if (href) {
+  if (to) {
     return (
-      <a
-        href={href}
+      <Link
+        to={to}
         className="flex w-full max-w-lg flex-col rounded-lg transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label={`Abrir publicação: ${post.title}`}
       >
         {body}
-      </a>
+      </Link>
     )
   }
 

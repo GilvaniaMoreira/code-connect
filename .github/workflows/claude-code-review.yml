@@ -1,16 +1,21 @@
 name: Claude Code Review
 
+# Desativado temporariamente — a conta Anthropic está sem créditos de API.
+# Pra reativar em PRs: troca `workflow_dispatch` por:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+# e confirma que o secret ANTHROPIC_API_KEY (workspace key) e
+# ANTHROPIC_WORKSPACE_ID estão configurados.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   claude-review:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # Skip runs where the secret is not exposed (e.g. PRs from forks) so the
-    # step doesn't burn 3 min just to fail with is_error:true.
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    # Fail fast if the API hangs — the SDK's default retry loop can burn ~3min
+    # before giving up. Six minutes is enough for a real review, short enough
+    # not to waste a slot when the model is unreachable.
+    timeout-minutes: 6
     permissions:
       contents: read
       pull-requests: write
@@ -33,11 +38,21 @@ jobs:
           echo "ANTHROPIC_API_KEY is present (length=${#ANTHROPIC_API_KEY})."
 
       - name: Run Claude Code Review
+        # Identity-linked API keys (personal keys) require the workspace id
+        # to be sent with every request; workspace-level keys don't. Setting
+        # this env var lets the SDK add the `anthropic-workspace-id` header
+        # so either key type works.
+        env:
+          ANTHROPIC_WORKSPACE_ID: ${{ secrets.ANTHROPIC_WORKSPACE_ID }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: '--model claude-sonnet-4-6 --max-turns 8'
+          # Surface the full SDK output — without this, silent failures
+          # (timeouts, model overload) show up as "is_error:true" with no
+          # explanation, making triage impossible.
+          show_full_output: true
           prompt: |
             Faça uma revisão técnica do pull request atual seguindo estas diretrizes:
 

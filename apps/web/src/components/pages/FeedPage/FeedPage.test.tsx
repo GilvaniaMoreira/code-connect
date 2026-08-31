@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PaginatedPosts, PostSummary } from '../../../services/posts'
+import { renderWithRouter } from '../../../test/renderWithRouter'
 import { FeedPage } from './FeedPage'
 
 vi.mock('../../../services/posts', () => ({
@@ -38,7 +39,7 @@ describe('FeedPage', () => {
   it('renders the loading status while fetching', () => {
     vi.mocked(listPosts).mockReturnValue(new Promise(() => {}))
 
-    render(<FeedPage />)
+    renderWithRouter(<FeedPage />)
 
     expect(screen.getByRole('status')).toHaveTextContent(/carregando publicações/i)
   })
@@ -52,18 +53,22 @@ describe('FeedPage', () => {
     }
     vi.mocked(listPosts).mockResolvedValue(payload)
 
-    render(<FeedPage />)
+    renderWithRouter(<FeedPage />)
 
-    expect(await screen.findByRole('link', { name: /como usar useeffect/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('link', { name: /como usar useeffect/i }),
+    ).toBeInTheDocument()
   })
 
   it('renders the error alert when the fetch fails', async () => {
     vi.mocked(listPosts).mockRejectedValue(new Error('boom'))
 
-    render(<FeedPage />)
+    renderWithRouter(<FeedPage />)
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(/não foi possível carregar o feed/i)
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /não foi possível carregar o feed/i,
+      )
     })
   })
 })

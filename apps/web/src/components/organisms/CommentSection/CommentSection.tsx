@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { Avatar } from '../../atoms/Avatar'
 import { Button } from '../../atoms/Button'
 import type { PostComment } from '../../../services/posts'
@@ -94,13 +95,16 @@ export function CommentSection({
         </form>
       ) : (
         <p className="text-sm">
-          <a href="#/login" className="underline underline-offset-2 hover:text-background">
+          <Link to="/login" className="underline underline-offset-2 hover:text-background">
             Entre
-          </a>{' '}
+          </Link>{' '}
           ou{' '}
-          <a href="#/cadastro" className="underline underline-offset-2 hover:text-background">
+          <Link
+            to="/cadastro"
+            className="underline underline-offset-2 hover:text-background"
+          >
             cadastre-se
-          </a>{' '}
+          </Link>{' '}
           para comentar.
         </p>
       )}

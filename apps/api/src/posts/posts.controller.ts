@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -14,6 +15,8 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -25,6 +28,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { ListPostsQueryDto } from './dto/list-posts-query.dto';
 import { PostCommentDto, PostDetailDto, PostSummaryDto } from './dto/post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginatedPosts, PostsService } from './posts.service';
 
 class PaginatedPostsDto implements PaginatedPosts {
@@ -66,6 +70,31 @@ export class PostsController {
   ): Promise<PostDetailDto> {
     const user = req.user as PublicUser;
     return this.postsService.create(user.id, dto);
+  }
+
+  @Patch(':slug')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: PostDetailDto })
+  @ApiForbiddenResponse({ description: 'Somente o autor pode editar' })
+  update(
+    @Param('slug') slug: string,
+    @Req() req: Request,
+    @Body() dto: UpdatePostDto,
+  ): Promise<PostDetailDto> {
+    const user = req.user as PublicUser;
+    return this.postsService.update(slug, user.id, dto);
+  }
+
+  @Delete(':slug')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiForbiddenResponse({ description: 'Somente o autor pode excluir' })
+  remove(@Param('slug') slug: string, @Req() req: Request): Promise<void> {
+    const user = req.user as PublicUser;
+    return this.postsService.remove(slug, user.id);
   }
 
   @Post(':slug/likes')

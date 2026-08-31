@@ -14,11 +14,20 @@
     "api:build": "pnpm --filter api build",
     "api:test": "pnpm --filter api test",
     "api:lint": "pnpm --filter api lint",
+    "web:test": "pnpm --filter web test",
     "dev": "pnpm --parallel --filter web --filter api run \"/^(dev|start:dev)$/\"",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
+    "test": "pnpm --filter api test && pnpm --filter web test run",
+    "coverage:api": "pnpm --filter api exec jest --coverage --coverageReporters=json --coverageReporters=text-summary --coverageReporters=lcov",
+    "coverage:web": "pnpm --filter web test:cov",
+    "coverage:merge": "node scripts/merge-coverage.mjs",
+    "coverage": "pnpm coverage:api && pnpm coverage:web && pnpm coverage:merge",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres"
+  },
+  "devDependencies": {
+    "nyc": "^18.0.0"
   }
 }

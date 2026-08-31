@@ -60,6 +60,7 @@ export class PostDetailDto extends PostSummaryDto {
   @ApiProperty() code: string;
   @ApiProperty({ type: [PostCommentDto] }) comments: PostCommentDto[];
   @ApiProperty() likedByMe: boolean;
+  @ApiProperty() isAuthor: boolean;
 
   static fromDetail(input: {
     post: Post & {
@@ -68,8 +69,9 @@ export class PostDetailDto extends PostSummaryDto {
       _count: { likes: number; comments: number };
     };
     likedByMe: boolean;
+    viewerId?: string;
   }): PostDetailDto {
-    const { post, likedByMe } = input;
+    const { post, likedByMe, viewerId } = input;
     return {
       ...PostSummaryDto.fromPrisma({
         post,
@@ -78,6 +80,7 @@ export class PostDetailDto extends PostSummaryDto {
       }),
       code: post.code,
       likedByMe,
+      isAuthor: viewerId !== undefined && post.authorId === viewerId,
       comments: post.comments.map((c) => PostCommentDto.fromPrisma(c)),
     };
   }

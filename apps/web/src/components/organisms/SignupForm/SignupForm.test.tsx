@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { SignupForm } from './SignupForm'
 import * as authService from '../../../services/auth'
 import * as tokenStorage from '../../../lib/token'
+import { renderWithRouter } from '../../../test/renderWithRouter'
+import { SignupForm } from './SignupForm'
 
 describe('SignupForm', () => {
   beforeEach(() => {
@@ -29,7 +30,7 @@ describe('SignupForm', () => {
     const setTokenSpy = vi.spyOn(tokenStorage, 'setToken')
     const onSuccess = vi.fn()
 
-    render(<SignupForm onSuccess={onSuccess} />)
+    renderWithRouter(<SignupForm onSuccess={onSuccess} />)
 
     await userEvent.type(screen.getByLabelText(/nome/i), 'Alice Dev')
     await userEvent.type(screen.getByLabelText(/email/i), 'alice@code.dev')
@@ -56,7 +57,7 @@ describe('SignupForm', () => {
     vi.spyOn(authService, 'register').mockRejectedValue(new Error('boom'))
     vi.spyOn(authService, 'extractApiError').mockReturnValue('Email já cadastrado')
 
-    render(<SignupForm />)
+    renderWithRouter(<SignupForm />)
 
     await userEvent.type(screen.getByLabelText(/nome/i), 'Alice Dev')
     await userEvent.type(screen.getByLabelText(/email/i), 'alice@code.dev')

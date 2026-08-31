@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../atoms/Button'
 import { clearToken } from '../../../lib/token'
 import { extractApiError, getMe, type PublicUser } from '../../../services/auth'
 
 export function HomePage() {
+  const navigate = useNavigate()
   const [user, setUser] = useState<PublicUser | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -18,7 +20,7 @@ export function HomePage() {
         if (cancelled) return
         setError(extractApiError(err, 'Sessão expirada. Faça login novamente.'))
         clearToken()
-        window.location.hash = '#/login'
+        navigate('/login')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -26,11 +28,11 @@ export function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [navigate])
 
   const handleLogout = () => {
     clearToken()
-    window.location.hash = '#/login'
+    navigate('/login')
   }
 
   return (

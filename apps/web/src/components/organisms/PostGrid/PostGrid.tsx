@@ -18,7 +18,7 @@ export function PostGrid({ posts, emptyMessage = 'Nenhum post encontrado.' }: Po
     <ul className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
       {posts.map((post) => (
         <li key={post.id} className="flex">
-          <PostCard post={post} href={`#/post/${post.slug}`} />
+          <PostCard post={post} to={`/post/${post.slug}`} />
         </li>
       ))}
     </ul>

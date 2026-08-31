@@ -221,6 +221,21 @@ describe('Posts (e2e)', () => {
       expect(body.id).toBe(created.id);
       expect(body.likedByMe).toBe(false);
       expect(body.comments).toEqual([]);
+      expect((body as unknown as { isAuthor: boolean }).isAuthor).toBe(false);
+    });
+
+    it('flags isAuthor=true for the author viewing their own post', async () => {
+      const { token } = await registerAndLogin();
+      const created = await createPost(token);
+
+      const res = await request(app.getHttpServer())
+        .get(`/posts/${created.slug}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect((res.body as unknown as { isAuthor: boolean }).isAuthor).toBe(
+        true,
+      );
     });
 
     it('reflects likedByMe=true for the authenticated viewer who liked it', async () => {
@@ -242,6 +257,112 @@ describe('Posts (e2e)', () => {
     it('returns 404 for a missing slug', async () => {
       await request(app.getHttpServer())
         .get(`/posts/nao-existe-${unique()}`)
+        .expect(404);
+    });
+  });
+
+  describe('PATCH /posts/:slug', () => {
+    it('updates the post when the viewer is the author (200)', async () => {
+      const { token } = await registerAndLogin();
+      const created = await createPost(token);
+
+      const res = await request(app.getHttpServer())
+        .patch(`/posts/${created.slug}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Título atualizado', tags: ['NestJS'] })
+        .expect(200);
+
+      const body = res.body as PostDetailBody;
+      expect(body.title).toBe('Título atualizado');
+      expect(body.tags).toEqual(['NestJS']);
+      expect(body.slug).toBe(created.slug);
+    });
+
+    it('rejects updates from other users with 403', async () => {
+      const { token: authorToken } = await registerAndLogin();
+      const created = await createPost(authorToken);
+      const { token: otherToken } = await registerAndLogin();
+
+      await request(app.getHttpServer())
+        .patch(`/posts/${created.slug}`)
+        .set('Authorization', `Bearer ${otherToken}`)
+        .send({ title: 'Tentativa alheia' })
+        .expect(403);
+    });
+
+    it('rejects unauthenticated requests with 401', async () => {
+      const { token } = await registerAndLogin();
+      const created = await createPost(token);
+
+      await request(app.getHttpServer())
+        .patch(`/posts/${created.slug}`)
+        .send({ title: 'Novo título' })
+        .expect(401);
+    });
+
+    it('returns 404 when the post does not exist', async () => {
+      const { token } = await registerAndLogin();
+
+      await request(app.getHttpServer())
+        .patch(`/posts/nao-existe-${unique()}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Qualquer coisa' })
+        .expect(404);
+    });
+
+    it('rejects invalid payloads with 400', async () => {
+      const { token } = await registerAndLogin();
+      const created = await createPost(token);
+
+      await request(app.getHttpServer())
+        .patch(`/posts/${created.slug}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'ab' })
+        .expect(400);
+    });
+  });
+
+  describe('DELETE /posts/:slug', () => {
+    it('removes the post when the viewer is the author (204)', async () => {
+      const { token } = await registerAndLogin();
+      const created = await createPost(token);
+
+      await request(app.getHttpServer())
+        .delete(`/posts/${created.slug}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(204);
+
+      await request(app.getHttpServer())
+        .get(`/posts/${created.slug}`)
+        .expect(404);
+    });
+
+    it('rejects deletes from other users with 403', async () => {
+      const { token: authorToken } = await registerAndLogin();
+      const created = await createPost(authorToken);
+      const { token: otherToken } = await registerAndLogin();
+
+      await request(app.getHttpServer())
+        .delete(`/posts/${created.slug}`)
+        .set('Authorization', `Bearer ${otherToken}`)
+        .expect(403);
+    });
+
+    it('rejects unauthenticated requests with 401', async () => {
+      const { token } = await registerAndLogin();
+      const created = await createPost(token);
+
+      await request(app.getHttpServer())
+        .delete(`/posts/${created.slug}`)
+        .expect(401);
+    });
+
+    it('returns 404 when the post does not exist', async () => {
+      const { token } = await registerAndLogin();
+
+      await request(app.getHttpServer())
+        .delete(`/posts/nao-existe-${unique()}`)
+        .set('Authorization', `Bearer ${token}`)
         .expect(404);
     });
   });
