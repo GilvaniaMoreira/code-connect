@@ -7,6 +7,10 @@ on:
 jobs:
   claude-review:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Skip runs where the secret is not exposed (e.g. PRs from forks) so the
+    # step doesn't burn 3 min just to fail with is_error:true.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     permissions:
       contents: read
       pull-requests: write
@@ -18,20 +22,33 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify Anthropic API key is present
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::error::Secret ANTHROPIC_API_KEY is not set for this workflow context."
+            exit 1
+          fi
+          echo "ANTHROPIC_API_KEY is present (length=${#ANTHROPIC_API_KEY})."
+
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: '--model claude-sonnet-4-6 --max-turns 8'
           prompt: |
             Faça uma revisão técnica do pull request atual seguindo estas diretrizes:
 
             1. Qualidade de código: legibilidade, nomes claros, funções pequenas e coesas.
             2. Boas práticas: princípios SOLID, DRY, tratamento de erros e segurança
                (validação de entrada, injeção de SQL, exposição de segredos, XSS).
-            3. Consistência com o restante do projeto (padrões do Next.js, Prisma e NestJS
-               conforme a área alterada).
-            4. Performance: consultas ao banco (N+1), memoização desnecessária, re-renderizações.
-            5. Testes: se há testes cobrindo o comportamento alterado; sugira cenários faltantes.
+            3. Consistência com o restante do projeto — este monorepo pnpm tem
+               `apps/api` em NestJS 11 e `apps/web` em React 19 + Vite + Tailwind
+               (Atomic Design). Não há Next.js nem Prisma; ignore essas referências.
+            4. Performance: N+1 em consultas, memoização desnecessária, re-renderizações.
+            5. Testes: cobertura do comportamento alterado; sugira cenários faltantes.
             6. Sugira melhorias objetivas, mostrando trechos de código quando útil.
 
             Responda em português, comente diretamente nas linhas relevantes do diff quando possível
